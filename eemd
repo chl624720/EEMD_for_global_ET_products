@@ -1,0 +1,94 @@
+% This is an EMD/EEMD program
+%
+%   function allmode=eemd(Y,Nstd,NE)
+%
+% INPUT:
+%       Y: Inputted data;
+%       Nstd: ratio of the standard deviation of the added noise and that of Y;
+%       NE: Ensemble number for the EEMD
+% OUTPUT:
+%       A matrix of N*(m+1) matrix, where N is the length of the input
+%       data Y, and m=fix(log2(N))-1. Column 1 is the original data, columns 2, 3, ...
+%       m are the IMFs from high to low frequency, and comlumn (m+1) is the
+%       residual (over all trend).
+%
+% NOTE:
+%       It should be noted that when Nstd is set to zero and NE is set to 1, the
+%       program degenerates to a EMD program.
+%
+% References can be found in the "Reference" section.
+%
+% The code is prepared by Zhaohua Wu. For questions, please read the "Q&A" section or
+% contact
+%   zwu@fsu.edu
+%
+
+
+function allmode=eemd(Y,Nstd,NE)
+xsize=length(Y);        % 数据长度
+dd=1:1:xsize;
+Ystd=std(Y);            % 数据的标准差
+Y=Y/Ystd;              %  计算阈值是时使用         
+
+TNM=fix(log2(xsize))-1;  % 本征模态IMF的数量
+TNM2=TNM+2;              %原始数据和最后一个残差的值
+
+%将最后得到的时间序列设置初值为0；
+for kk=1:1:TNM2
+    for ii=1:1:xsize
+        allmode(ii,kk)=0.0;
+    end
+end
+
+
+
+
+%%--------EEMD-----------
+for iii=1:1:NE
+    for i=1:xsize
+        temp=randn(1,1)*Nstd;      % 高斯白噪声：正态分布的随机数
+        X1(i)=Y(i)+temp;           % 原始数据加入白噪声后
+    end
+
+    for jj=1:1:xsize
+        mode(jj,1) = Y(jj);
+    end
+    
+    xorigin = X1;      %  加入白噪声后的数据 
+    xend = xorigin;    %  加入白噪声后的数据
+    
+    nmode = 1;
+    while nmode <= TNM     %判断是否小于本征模态数量
+        xstart = xend;
+        iter = 1;
+   
+        while iter<=10
+            [spmax, spmin, flag]=extrema(xstart);    % 数据的极值
+            upper= spline(spmax(:,1),spmax(:,2),dd); % 插值极大值
+            lower= spline(spmin(:,1),spmin(:,2),dd); % 插值极小值
+            mean_ul = (upper + lower)/2;             % 包络线
+            xstart = xstart - mean_ul;               % 从原数据中减去包络线，得到一个近似的IMF
+            iter = iter +1;                          % 直到iter>10,默认收敛，可以停止。
+        end
+        xend = xend - xstart;                        % 原始数据减去本征模态，即得到残差
+   
+   	    nmode=nmode+1;                              %这样就确定了第一个本征模态。
+        
+        for jj=1:1:xsize
+            mode(jj,nmode) = xstart(jj);            %  记录本征模态的值           
+        end
+    end
+
+    for jj=1:1:xsize
+        mode(jj,nmode+1)=xend(jj);                   % 记录最后一个残差的值
+    end
+   
+    allmode=allmode+mode;                            %时间序列的分解 
+    
+end
+
+allmode=allmode/NE;
+allmode=allmode*Ystd;
+
+
+
