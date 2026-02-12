@@ -1,0 +1,29 @@
+clc;
+% dataset为你的一列数据
+dataset = xlsread('D:\data\ET_year.xlsx');
+data = dataset -mean(dataset);
+st =0.2.* std(data,1);
+
+
+rslt=eemd(data,st,100); % 0.2可以改为0.2-0.3，表示信噪比；100可以表示为100-1000；若0.2和100变为0,1；那么EEMD简化为EMD
+[m,n]=size(rslt);
+imfs=rslt(:,2:n-1);
+[sigline50,logep]=significance(imfs,0.5);
+[sigline80,logep]=significance(imfs,0.2);
+[sigline90,logep]=significance(imfs,0.1);
+[sigline95,logep]=significance(imfs,0.05);
+% 
+% plot(sigline50(:,1),sigline50(:,2),'b');  %  50percenta line
+% hold on
+% plot(sigline80(:,1),sigline80(:,2),'g');  %  80percenta line
+plot(sigline90(:,1),sigline90(:,2),'y');  %  90percenta line
+hold on
+plot(sigline95(:,1),sigline95(:,2),'m-');  % 95 percenta line
+plot(logep(:,1),logep(:,2),'r*');  
+plot(logep(1,1),logep(1,2),'b*');
+grid;
+xlabel('LOG2 ( Mean Period )');
+ylabel('LOG2 ( Mean Normalized Energy )');
+title('Significance test of IMFs of white noise');
+
+
