@@ -1,0 +1,20 @@
+clc;clear;close all;
+
+load SiTHV2_1982_2020_MET_at025_1000.mat;
+
+ ET_abm = MET-mean(MET,2,'omitnan');
+ st =0.2.* std(ET_abm,1,2);
+
+
+for i = 1:1800
+        num = num2str(i,'%03d')
+        data = ET_abm(i,:);
+        index =find(isnan(data)==1);
+        if length(index)>=1
+           rslt(i,1:39,1:6)=zeros(1,39,6)+NaN;
+        else
+          rslt1=eemd(data,st(i),100); % 0.2可以改为0.2-0.3，表示信噪比；100可以表示为100-1000；若0.2和100变为0,1；那么EEMD简化为EMD
+          rslt(i,1:39,1:6) =rslt1(:,1:6);
+        end
+   
+end
